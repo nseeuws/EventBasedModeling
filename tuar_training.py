@@ -1,4 +1,3 @@
-import argparse
 import os
 import tensorflow as tf
 import numpy as np
@@ -202,58 +201,7 @@ def main(args):
     df.to_csv(log_path)
 
 
-def parser_builder():
-    parser = argparse.ArgumentParser('Options')
-
-    # Paths
-    parser.add_argument(
-        '--data_path', type=str,
-        help="Path to the TUAR HDF5 storage object",
-        required=True
-    )
-    parser.add_argument(
-        '--network_path', type=str,
-        help="Optional, path to where the EventNet network weights should be stored."
-    )
-    parser.add_argument(
-        '--log_path', type=str,
-        help="Optional, path to where to store loss logs."
-    )
-
-    # Training details
-    parser.add_argument(
-        '--batch_size', type=int, default=16,
-        help="Batch size"
-    )
-    parser.add_argument(
-        '--lr', type=float, default=1e-3,
-        help="Base learning rate. Will decay throughout training"
-    )
-    parser.add_argument(
-        '--n_epochs', type=int, default=100,
-        help="Number of training epochs"
-    )
-    parser.add_argument(
-        '--duration_factor', type=int, default=10,
-        help="How large should the training window be? Recommended to not change"
-    )
-
-    # Losses
-    parser.add_argument(
-        '--lambda_r', type=float, default=5.,
-        help="Relative regression loss weight."
-    )
-
-    # Network details
-    parser.add_argument(
-        '--duration_threshold', type=float, default=10.,
-        help='Maximum duration for EventNet'
-    )
-
-    return parser
-
-
 if __name__ == '__main__':
-    argument_parser = parser_builder()
+    argument_parser = eventnet.utils.parser_builder()
     arguments = argument_parser.parse_args()
     main(args=arguments)
