@@ -9,5 +9,5 @@ python tuar_training.py --data_path <hdf5 data set> --batch_size 16 --lr 1e-3 --
 
 Seizure data (TUSZ dataset):
 ```commandline
-python tusz_training.py
+python tusz_training.py --duration_threshold 250
 ```

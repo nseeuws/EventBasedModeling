@@ -46,8 +46,6 @@ def main(args):
     # ========== ACTUAL SCRIPT ==========
     # Standard parameters (changing these will involve changing implementations as well
     fs = 200
-    # TODO Duration threshold of TUSZ is 250.
-    # Should probably add "example terminal command" for both data sets
 
     n_steps = 4
     stride_factor = 4
