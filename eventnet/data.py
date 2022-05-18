@@ -1,7 +1,9 @@
 from typing import Tuple, List
 import numpy as np
 import h5py
+from sklearn import model_selection
 
+import eventnet.encoding
 import utils
 import encoding
 
@@ -153,6 +155,66 @@ def _filter_tuar_data(
     return signals_filtered, labels_filtered
 
 
+def _filter_tusz_data(
+        signals: List[np.ndarray], labels: List[np.ndarray],
+        duration_threshold: int, input_duration: int
+) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    signals_filtered = []
+    labels_filtered = []
+
+    for signal, label in zip(signals, labels):
+        if len(label) > input_duration:  # Is the recording long enough?
+            events = eventnet.encoding.get_objects(label)
+            if len(events) > 0:
+                # If there are events, are they not too long?
+                duration_flag = [(event[1] - event[0]) <= duration_threshold
+                                 for event in events]
+                if all(duration_flag):
+                    signals_filtered.append(signal)
+                    labels_filtered.append(label)
+            else:  # No events => added to the list
+                signals_filtered.append(signal)
+                labels_filtered.append(label)
+    return signals_filtered, labels_filtered
+
+
+def _get_tusz_training_data(data_path: str)\
+        -> Tuple[List[str], List[np.ndarray], List[np.ndarray]]:
+    with h5py.File(data_path) as file:
+        file_names = []
+        labels = []
+        signals = []
+
+        file_names_ds = file['filenames']
+        signals_ds = file['signals']
+        labels_ds = file['labels']
+
+        for i in range(len(signals_ds)):
+            file_names.append(file_names_ds[i])
+            data = np.asarray(np.vstack(signals_ds[i]), dtype=np.float32).T
+            mean = np.mean(data, axis=0)
+            std = np.std(data, axis=0)
+            signals.append((data - mean) / std)
+            labels.append(np.asarray(labels_ds[i], dtype=np.int8))
+
+    return file_names, signals, labels
+
+
+def _split_tusz_data(signals: data_container, labels: data_container)\
+        -> Tuple[data_container, data_container, data_container, data_container]:
+    # Find out what recordings contain seizures
+    recording_labels = [
+        np.sum(label) > 0 for label in labels
+    ]
+
+    # Stratify splits based on seizure content
+    signals_train, signals_val, labels_train, labels_val = model_selection.train_test_split(
+        signals, labels, test_size=0.2, random_state=42, stratify=recording_labels
+    )
+
+    return signals_train, labels_train, signals_val, labels_val
+
+
 def load_tuar_training_data(
         data_path: str, duration_threshold: float,
         stride: int, fs=200
@@ -182,6 +244,48 @@ def load_tuar_training_data(
     )
 
     # Create output variables
+    training_targets = (
+        signals_train, centers_train, durations_train
+    )
+    val_targets = (
+        signals_val, centers_val, durations_val
+    )
+
+    return training_targets, val_targets
+
+
+def load_tusz_training_data(
+        data_path: str, duration_threshold: float,
+        stride: int, fs: int, input_duration: int
+) -> Tuple[target_container, target_container]:
+    scaled_threshold = int(duration_threshold * fs)
+
+    # Load data from disk
+    _, signals, labels = _get_tusz_training_data(
+        data_path=data_path
+    )
+
+    # Purge recordings that are too short, and contain events that are too long
+    # (only for training)
+    signals, labels = _filter_tusz_data(
+        signals=signals, labels=labels,
+        duration_threshold=scaled_threshold, input_duration=input_duration
+    )
+
+    # Split data into training and validation
+    signals_train, labels_train, signals_val, labels_val = _split_tusz_data(
+        signals=signals, labels=labels
+    )
+
+    # Prepare learning targets
+    centers_train, durations_train = encoding.get_target_maps(
+        labels=labels_train, stride=stride, duration_cutoff=scaled_threshold
+    )
+    centers_val, durations_val = encoding.get_target_maps(
+        labels=labels_val, stride=stride, duration_cutoff=scaled_threshold
+    )
+
+    # Package outputs
     training_targets = (
         signals_train, centers_train, durations_train
     )

@@ -1,7 +1,4 @@
 import os
-import tensorflow as tf
-import numpy as np
-import pandas as pd
 
 import eventnet
 
@@ -12,11 +9,11 @@ def main(args):
     if args.network_path:
         network_path = args.network_path
     else:
-        network_path = 'tuar_eventnet.h5'
+        network_path = 'tusz_eventnet.h5'
     if args.log_path:
         log_path = args.log_path
     else:
-        log_path = 'tuar_eventnet_log.csv'
+        log_path = 'tusz_eventnet_log.csv'
 
     # Sanity check - check for access to all the files
     assert os.path.isfile(data_path)
@@ -53,8 +50,42 @@ def main(args):
     down_factor = stride_factor ** 6
     input_duration = duration_factor * down_factor
 
+    # DATA
+    # Load and prepare data
+    training_targets, val_targets = eventnet.data.load_tusz_training_data(
+        data_path=data_path, duration_threshold=duration_threshold,
+        fs=fs, stride=stride, input_duration=input_duration
+    )
+    signals_train, centers_train, durations_train = training_targets
+    signals_val, centers_val, durations_val = val_targets
 
-    pass
+    # Set up generators to produce training (and validation) batches
+    generator = eventnet.training.TUSZGenerator(
+        signals=signals_train, centers=centers_train, durations=durations_train,
+        batch_size=batch_size, shuffle=True,
+        window_size=input_duration // stride, batch_stride=input_duration // (2 * stride),
+        network_stride=stride
+    )
+    val_generator = eventnet.training.TUSZGenerator(
+        signals=signals_val, centers=centers_val, durations=durations_val,
+        batch_size=batch_size, shuffle=False,
+        window_size=input_duration // stride, batch_stride=input_duration // (2 * stride),
+        network_stride=stride
+    )
+
+    # LEARNING SETUP
+    # Network
+    network = eventnet.network.build_seizure_eventnet(
+        input_duration=input_duration
+    )
+
+    # TRAINING
+    eventnet.training.training_loop(
+        network=network,
+        generator=generator, val_generator=val_generator,
+        learning_rate=learning_rate, lambda_r=lambda_r,
+        n_epochs=n_epochs, log_path=log_path, network_path=network_path
+    )
 
 
 if __name__ == '__main__':
