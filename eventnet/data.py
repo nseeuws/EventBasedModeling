@@ -4,8 +4,8 @@ import h5py
 from sklearn import model_selection
 
 import eventnet.encoding
-import utils
-import encoding
+import eventnet.utils
+import eventnet.encoding
 
 # Typing aides
 data_container = List[np.ndarray]
@@ -92,10 +92,10 @@ def _get_indexed_tuar_data(
     )
 
     # Find signals containing targets
-    targets = [np.sum(labels) for labels in labels_stacked]
+    targets = np.asarray([np.sum(labels) > 0 for labels in labels_stacked])
 
     # Split data into training and validation
-    fold_splitter = utils.stratified_group_k_fold(
+    fold_splitter = eventnet.utils.stratified_group_k_fold(
         X=signals_stacked, y=targets, groups=names_stacked,
         k=5, seed=1234
     )
@@ -104,7 +104,7 @@ def _get_indexed_tuar_data(
     names_stacked = np.asarray(names_stacked)
     targets = np.asarray(targets)
     idx, test_idx = next(fold_splitter)
-    training_fold_splitter = utils.stratified_group_k_fold(
+    training_fold_splitter = eventnet.utils.stratified_group_k_fold(
         X=signals_stacked[idx], y=targets[idx], groups=names_stacked[idx],
         k=5, seed=42
     )
@@ -144,7 +144,7 @@ def _filter_tuar_data(
     labels_filtered = []
 
     for signal, label in zip(signals, labels):
-        events = encoding.get_objects(label_array=label)
+        events = eventnet.encoding.get_objects(label_array=label)
 
         if len(events) > 0:
             duration = [(event[1] - event[0]) <= duration_threshold
@@ -180,7 +180,7 @@ def _filter_tusz_data(
 
 def _get_tusz_training_data(data_path: str)\
         -> Tuple[List[str], List[np.ndarray], List[np.ndarray]]:
-    with h5py.File(data_path) as file:
+    with h5py.File(data_path, mode='r') as file:
         file_names = []
         labels = []
         signals = []
@@ -236,10 +236,10 @@ def load_tuar_training_data(
     )
 
     # Construct "target maps"
-    centers_train, durations_train = encoding.get_target_maps(
+    centers_train, durations_train = eventnet.encoding.get_target_maps(
         labels=labels_train, stride=stride, duration_cutoff=scaled_duration
     )
-    centers_val, durations_val = encoding.get_target_maps(
+    centers_val, durations_val = eventnet.encoding.get_target_maps(
         labels=labels_val, stride=stride, duration_cutoff=scaled_duration
     )
 
@@ -278,10 +278,10 @@ def load_tusz_training_data(
     )
 
     # Prepare learning targets
-    centers_train, durations_train = encoding.get_target_maps(
+    centers_train, durations_train = eventnet.encoding.get_target_maps(
         labels=labels_train, stride=stride, duration_cutoff=scaled_threshold
     )
-    centers_val, durations_val = encoding.get_target_maps(
+    centers_val, durations_val = eventnet.encoding.get_target_maps(
         labels=labels_val, stride=stride, duration_cutoff=scaled_threshold
     )
 

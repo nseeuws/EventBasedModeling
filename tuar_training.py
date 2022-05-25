@@ -13,6 +13,7 @@ def main(args):
         network_path = args.network_path
     else:
         network_path = 'tuar_eventnet.h5'
+
     if args.log_path:
         log_path = args.log_path
     else:
@@ -20,8 +21,10 @@ def main(args):
 
     # Sanity check - check for access to all the files
     assert os.path.isfile(data_path)
-    assert os.access(network_path, mode=os.F_OK)
-    assert os.access(log_path, mode=os.F_OK)
+    with open(network_path, mode='a'):
+        os.utime(network_path, None)  # Create empty file
+    with open(log_path, mode='a'):
+        os.utime(log_path, None)  # Create empty file
 
     # Get training command line arguments
     batch_size = args.batch_size

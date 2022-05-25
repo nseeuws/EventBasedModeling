@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-import losses
+import eventnet.losses
 
 
 class TUSZGenerator(tf.keras.utils.Sequence):
@@ -22,10 +22,10 @@ class TUSZGenerator(tf.keras.utils.Sequence):
         self.window_size = window_size
         self.shuffle = shuffle
 
-        self.n_channels = signals[0].shape
+        self.n_channels = signals[0].shape[1]
 
         key_array = []
-        for i, array in enumerate(self.locations):
+        for i, array in enumerate(self.centers):
             n = (len(array) - self.window_size) // self.stride
             for j in range(n):
                 key_array.append([i, self.stride * j])
@@ -83,7 +83,7 @@ class TUARGenerator(tf.keras.utils.Sequence):
         self.rng = np.random.default_rng()
 
         key_array = []
-        for i, array in enumerate(self.locations):
+        for i, array in enumerate(self.centers):
             n = (len(array) - self.window_size) // self.stride
             for j in range(n):
                 key_array.append([i, self.stride * j])
@@ -110,7 +110,7 @@ class TUARGenerator(tf.keras.utils.Sequence):
         for i in range(self.batch_size):
             key = self.key_array[keys[i]]
             signal = self.signals[key[0]][key[1] * stride:stride * (key[1] + self.window_size)].T
-            center_ = self.locations[key[0]][key[1]:key[1] + self.window_size]
+            center_ = self.centers[key[0]][key[1]:key[1] + self.window_size]
             duration_ = self.durations[key[0]][key[1]:key[1] + self.window_size]
             if flip[i] and self.shuffle:
                 signal = np.flip(signal)
@@ -137,8 +137,8 @@ def training_loop(
         log_path: str, network_path: str
 ) -> None:
     # Losses
-    regression_loss = losses.iou_loss
-    focal_loss = losses.build_focal_loss()
+    regression_loss = eventnet.losses.iou_loss
+    focal_loss = eventnet.losses.build_focal_loss()
 
     # Optimizer
     n_batches = len(generator)

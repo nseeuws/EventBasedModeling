@@ -14,9 +14,6 @@ def focal_loss(center_target: tf.Tensor, center_pred: tf.Tensor, logit_pred: tf.
         tf.math.pow(tf.constant(1., dtype=tf.float32) - center_target, beta),
         tf.math.pow(center_pred, alpha)
     )
-    background_term = tf.math.multiply(
-        background_term, -stable_softplus_tf()
-    )
     background_term = tf.math.multiply(background_term, -stable_softplus_tf(logit_pred))
     background_term = a_t * tf.reduce_sum(background_term)
 
@@ -25,7 +22,7 @@ def focal_loss(center_target: tf.Tensor, center_pred: tf.Tensor, logit_pred: tf.
     logit = tf.boolean_mask(logit_pred, mask=mask)
     center_term = tf.math.multiply(
         tf.math.pow(1. - location, alpha),
-        logit - stable_softplus_tf(logit_pred)
+        logit - stable_softplus_tf(logit)
     )
     center_term = (tf.constant(1., dtype=tf.float32) - a_t) * tf.reduce_sum(center_term)
 

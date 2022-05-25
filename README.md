@@ -1,6 +1,6 @@
 # EventNet
 
-## Example scripts
+## Training EventNet
 
 Artefact data (TUAR dataset):
 ```commandline

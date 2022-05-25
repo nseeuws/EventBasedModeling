@@ -1,7 +1,7 @@
-import data
-import decoding
-import encoding
-import losses
-import network
-import training
-import utils
+import eventnet.data
+import eventnet.decoding
+import eventnet.encoding
+import eventnet.losses
+import eventnet.network
+import eventnet.training
+import eventnet.utils
