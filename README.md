@@ -1,13 +1,15 @@
-# EventNet
+# Avoiding post-processing with event-based detection in biomedical signals 
 
-## Training EventNet
+Code repository accompanying our publication on event-based modeling.
 
-Artefact data (TUAR dataset):
-```commandline
-python tuar_training.py --data_path <hdf5 data set> --batch_size 16 --lr 1e-3 --n_epochs 100 --lambda_r 5 --duration_threshold 10
-```
 
-Seizure data (TUSZ dataset):
-```commandline
-python tusz_training.py --data_path <hdf5 data set> --batch_size 16 --lr 1e-3 --n_epochs 100 --lambda_r 5 --duration_threshold 250
-```
+The repo is split among our synthetic data experiments and the real-world data experiments, since both rely on separate dependencies (synthetic uses PyTorch, real-world Tensorflow). The supplementary material can be found in `supp.pdf`.
+
+## Synthetic data
+The files `event_train_and_evaluation.py` and `epoch_train_and_evaluate.py` run the event-based and epoch-based training runs respectively. The epoch-based post-processing can be set using command line arguments.
+
+
+## Real-world data
+EEG artefact training runs can be started with `run_event_artefact.py` and `run_epoch_artefact.py`. One can choose how many signal recordings each run trains on.
+
+EEG seizures training runs can be started with `run_event_seizure.py` and `run_epoch_seizure.py`. One can choose how many signal recordings each run trains on.

@@ -1,6 +1,7 @@
 from typing import List, Tuple
-import numpy as np
-from scipy import signal
+
+import numpy as np 
+import scipy.signal
 
 
 def get_objects(label_array: np.ndarray) -> List[Tuple[int, int]]:
@@ -95,7 +96,7 @@ def get_target_maps(
         duration = np.zeros(shape=center.shape, dtype=np.float32)
         if n_objects > 0:
             targets = get_regression_targets(labels=label)
-            peaks, _ = signal.find_peaks(center, width=1, height=0.9)
+            peaks, _ = scipy.signal.find_peaks(center, width=1, height=0.9)
             for i_peak, peak in enumerate(peaks):
                 start = targets[i_peak][0]
                 stop = targets[i_peak][1]
